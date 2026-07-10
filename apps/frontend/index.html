@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#10140D" />
+    <title>Studio Meadow</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="panel" aria-labelledby="app-title">
+        <header class="topbar">
+          <div class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" role="img">
+              <path d="M12 21c3.8-3.1 5.7-6.4 5.7-10a5.7 5.7 0 0 0-11.4 0c0 3.6 1.9 6.9 5.7 10Z" />
+              <path d="M12 15.2c1.8-1.2 2.7-2.6 2.7-4.2a2.7 2.7 0 0 0-5.4 0c0 1.6.9 3 2.7 4.2Z" />
+            </svg>
+          </div>
+          <div>
+            <h1 id="app-title">Studio Meadow</h1>
+            <p>Draw a flower for the opening-night meadow.</p>
+          </div>
+        </header>
+
+        <label class="field-label" for="guest-name">Name optional</label>
+        <input
+          id="guest-name"
+          class="name-input"
+          maxlength="48"
+          autocomplete="name"
+          placeholder="Leave blank to stay anonymous"
+        />
+
+        <div class="canvas-frame">
+          <div class="stem-guide" aria-hidden="true"></div>
+          <canvas id="drawing-canvas" class="drawing-canvas" aria-label="Flower drawing canvas"></canvas>
+        </div>
+
+        <div class="tools-row" aria-label="Drawing tools">
+          <button id="undo-button" class="icon-button" type="button" title="Undo" aria-label="Undo">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7H4v5" /><path d="M4.5 12A7.5 7.5 0 1 0 7 6.4L4 9.4" /></svg>
+          </button>
+          <button id="clear-button" class="icon-button" type="button" title="Clear" aria-label="Clear">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="m9 11 .5 7" /><path d="m15 11-.5 7" /><path d="M6 6l1 15h10l1-15" /></svg>
+          </button>
+          <label class="brush-control" for="brush-size">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 16 9.5-9.5a2.1 2.1 0 0 1 3 3L10 19H5v-5Z" /><path d="M13.5 9.5 16.5 12.5" /></svg>
+            <input id="brush-size" type="range" min="8" max="42" value="18" aria-label="Brush size" />
+          </label>
+        </div>
+
+        <div id="palette" class="palette" aria-label="Color palette"></div>
+
+        <button id="submit-button" class="submit-button" type="button" disabled>
+          <svg id="submit-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z" /><path d="M22 2 11 13" /></svg>
+          <span id="submit-label">Send flower</span>
+        </button>
+
+        <p id="status-message" class="status-message" aria-live="polite"></p>
+      </section>
+    </main>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

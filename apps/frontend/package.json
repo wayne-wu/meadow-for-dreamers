@@ -1,0 +1,11 @@
+{
+  "name": "studio-meadow-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/static-server.mjs",
+    "build": "node scripts/build.mjs",
+    "preview": "node scripts/static-server.mjs dist 4173"
+  }
+}
