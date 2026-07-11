@@ -18,8 +18,11 @@ const palette = [
   ['Soft Amber Glow', '#F0B66A']
 ];
 
+const welcomeScene = document.querySelector('#welcome-scene');
+const drawingScene = document.querySelector('#drawing-scene');
+const thanksScene = document.querySelector('#thanks-scene');
+const startButton = document.querySelector('#start-button');
 const canvas = document.querySelector('#drawing-canvas');
-const nameInput = document.querySelector('#guest-name');
 const brushInput = document.querySelector('#brush-size');
 const paletteEl = document.querySelector('#palette');
 const undoButton = document.querySelector('#undo-button');
@@ -27,6 +30,7 @@ const clearButton = document.querySelector('#clear-button');
 const submitButton = document.querySelector('#submit-button');
 const submitLabel = document.querySelector('#submit-label');
 const submitIcon = document.querySelector('#submit-icon');
+const drawAnotherButton = document.querySelector('#draw-another-button');
 const statusMessage = document.querySelector('#status-message');
 const context = canvas.getContext('2d', { willReadFrequently: true });
 
@@ -36,9 +40,17 @@ let drawing = false;
 let lastPoint = null;
 let visiblePixels = 0;
 let undoStack = [];
+let lastTouchEndAt = 0;
 
 canvas.width = EXPORT_WIDTH;
 canvas.height = EXPORT_HEIGHT;
+
+function showScene(scene) {
+  [welcomeScene, drawingScene, thanksScene].forEach((currentScene) => {
+    currentScene.classList.toggle('active', currentScene === scene);
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 
 function getOrCreateSessionId() {
   const key = 'studio-meadow-session-id';
@@ -177,6 +189,15 @@ function clearCanvas() {
   updateVisiblePixelCount();
 }
 
+function resetDrawing() {
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  undoStack = [];
+  drawing = false;
+  lastPoint = null;
+  setStatus('idle');
+  updateVisiblePixelCount();
+}
+
 async function submitFlower(payload) {
   const apiBaseUrl = getApiBaseUrl();
 
@@ -223,13 +244,20 @@ async function handleSubmit() {
     setStatus('sending');
     await submitFlower({
       session_id: getOrCreateSessionId(),
-      name: nameInput.value.trim() || null,
+      meadow_session_id: getMeadowSessionId(),
+      name: null,
       image_base64: canvas.toDataURL('image/png')
     });
-    setStatus('sent', 'Thank you - your flower will bloom in the meadow shortly.');
+    setStatus('sent');
+    showScene(thanksScene);
   } catch {
     setStatus('error', 'This flower could not be sent. Please try again.');
   }
+}
+
+function getMeadowSessionId() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('session') || params.get('meadow_session_id') || null;
 }
 
 function renderPalette() {
@@ -256,6 +284,15 @@ function renderPalette() {
 renderPalette();
 updateVisiblePixelCount();
 
+startButton.addEventListener('click', () => {
+  showScene(drawingScene);
+});
+
+drawAnotherButton.addEventListener('click', () => {
+  resetDrawing();
+  showScene(welcomeScene);
+});
+
 brushInput.addEventListener('input', (event) => {
   brushSize = Number(event.target.value);
 });
@@ -264,6 +301,24 @@ canvas.addEventListener('pointerdown', beginStroke);
 canvas.addEventListener('pointermove', continueStroke);
 canvas.addEventListener('pointerup', endStroke);
 canvas.addEventListener('pointercancel', endStroke);
+document.addEventListener(
+  'touchend',
+  (event) => {
+    const now = Date.now();
+    if (now - lastTouchEndAt < 350) {
+      event.preventDefault();
+    }
+    lastTouchEndAt = now;
+  },
+  { passive: false }
+);
+document.addEventListener(
+  'gesturestart',
+  (event) => {
+    event.preventDefault();
+  },
+  { passive: false }
+);
 undoButton.addEventListener('click', undo);
 clearButton.addEventListener('click', clearCanvas);
 submitButton.addEventListener('click', handleSubmit);

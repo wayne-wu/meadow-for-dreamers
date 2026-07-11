@@ -1,8 +1,10 @@
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Libre+Baskerville:wght@400;700&display=swap");
+
 :root {
   color: #f1e2c8;
   background: #10140d;
   font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    "Libre Baskerville", Georgia, "Times New Roman", serif;
   font-synthesis: none;
   text-rendering: geometricPrecision;
   -webkit-font-smoothing: antialiased;
@@ -24,12 +26,16 @@
 html {
   min-height: 100%;
   background: var(--shadow);
+  touch-action: manipulation;
 }
 
 body {
   min-height: 100%;
   margin: 0;
   overflow-x: hidden;
+  overflow-y: auto;
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
 }
 
 button,
@@ -41,24 +47,71 @@ button {
   -webkit-tap-highlight-color: transparent;
 }
 
+svg {
+  display: block;
+}
+
+svg path {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
 .app-shell {
   min-height: 100svh;
   padding: max(16px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right))
     max(18px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   background:
     radial-gradient(circle at 50% 4%, rgba(240, 182, 106, 0.16), transparent 32%),
     linear-gradient(180deg, #182016 0%, #10140d 54%, #080a07 100%);
 }
 
+.scene {
+  width: min(100%, 390px);
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.scene:not(.active) {
+  display: none;
+}
+
+.scene.active {
+  opacity: 1;
+  transform: translateY(0);
+  animation: scene-in 420ms ease both;
+}
+
+.scene-copy {
+  min-height: calc(100svh - 34px);
+  grid-template-rows: minmax(58px, 1fr) auto minmax(58px, 1fr);
+  justify-items: center;
+  align-content: stretch;
+  align-items: center;
+  row-gap: clamp(18px, 5svh, 34px);
+  padding: clamp(16px, 5svh, 34px) 8px;
+  text-align: center;
+}
+
+.scene-copy.active {
+  display: grid;
+}
+
 .panel {
-  width: min(100%, 430px);
-  min-height: calc(100svh - 32px);
-  display: flex;
+  width: min(100%, 390px);
+  min-height: calc(100svh - 34px);
+  align-items: stretch;
   flex-direction: column;
   gap: 12px;
+}
+
+.panel.active {
+  display: flex;
 }
 
 .topbar {
@@ -80,11 +133,38 @@ button {
   background: rgba(38, 50, 36, 0.72);
 }
 
+.brand-mark.large {
+  width: 58px;
+  height: 58px;
+}
+
 h1 {
   margin: 0;
-  font-size: 1.6rem;
-  line-height: 1.05;
-  font-weight: 650;
+  font-family: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+  font-size: 2rem;
+  line-height: 0.95;
+  font-weight: 600;
+}
+
+.copy-block {
+  display: grid;
+  gap: clamp(12px, 3svh, 18px);
+  width: 100%;
+  justify-items: center;
+}
+
+.copy-block h1 {
+  max-width: 9ch;
+  font-size: clamp(2rem, 10.5vw, 3.75rem);
+  line-height: 0.94;
+}
+
+.copy-block p {
+  max-width: min(19rem, 88vw);
+  margin: 0 auto;
+  color: rgba(241, 226, 200, 0.78);
+  font-size: clamp(0.9rem, 4vw, 1rem);
+  line-height: 1.75;
 }
 
 p {
@@ -92,14 +172,15 @@ p {
 }
 
 .topbar p {
-  margin-top: 4px;
+  margin-top: 7px;
   color: rgba(241, 226, 200, 0.72);
-  font-size: 0.95rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
 }
 
 .field-label {
   color: rgba(241, 226, 200, 0.8);
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   margin-top: 2px;
 }
 
@@ -112,6 +193,7 @@ p {
   color: var(--ivory);
   background: rgba(16, 20, 13, 0.82);
   outline: none;
+  font-size: 0.85rem;
 }
 
 .name-input::placeholder {
@@ -125,10 +207,11 @@ p {
 
 .canvas-frame {
   position: relative;
-  width: 100%;
-  flex: 1 1 auto;
-  min-height: 430px;
-  max-height: min(62svh, 660px);
+  width: min(100%, calc((100svh - 242px) / 2));
+  min-width: min(100%, 280px);
+  aspect-ratio: 512 / 1024;
+  flex: 0 0 auto;
+  align-self: center;
   border: 1px solid rgba(161, 179, 146, 0.3);
   border-radius: 8px;
   overflow: hidden;
@@ -181,6 +264,27 @@ p {
   height: 100%;
   cursor: crosshair;
   touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.circle-button {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(232, 196, 107, 0.55);
+  border-radius: 50%;
+  color: var(--ivory);
+  background: rgba(38, 50, 36, 0.78);
+  cursor: pointer;
+  box-shadow: 0 0 28px rgba(232, 196, 107, 0.1);
+}
+
+.circle-button svg {
+  width: 26px;
+  height: 26px;
 }
 
 .tools-row {
@@ -207,8 +311,18 @@ p {
   background: rgba(38, 50, 36, 0.86);
 }
 
+.icon-button svg,
+.brush-control svg,
+.submit-button svg {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+}
+
 .icon-button:active,
-.submit-button:active {
+.submit-button:active,
+.circle-button:active,
+.home-link:active {
   transform: translateY(1px);
 }
 
@@ -264,6 +378,7 @@ p {
   background: linear-gradient(180deg, #f0b66a 0%, #d69755 100%);
   color: #10140d;
   font-weight: 700;
+  font-size: 0.9rem;
 }
 
 .submit-button:disabled {
@@ -275,7 +390,8 @@ p {
 .status-message {
   min-height: 20px;
   color: rgba(241, 226, 200, 0.78);
-  font-size: 0.94rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
   text-align: center;
 }
 
@@ -283,17 +399,80 @@ p {
   color: #e8b7b6;
 }
 
+.home-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 22px;
+  border: 1px solid rgba(161, 179, 146, 0.36);
+  border-radius: 999px;
+  color: var(--ivory);
+  background: rgba(38, 50, 36, 0.72);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.final-actions {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+}
+
+.home-link.secondary {
+  color: rgba(241, 226, 200, 0.86);
+  background: rgba(16, 20, 13, 0.42);
+}
+
+@keyframes scene-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (max-height: 720px) {
   .panel {
     gap: 9px;
   }
 
-  .canvas-frame {
-    min-height: 330px;
+  .scene-copy {
+    grid-template-rows: minmax(42px, 0.8fr) auto minmax(42px, 0.8fr);
+    row-gap: 14px;
+    padding-top: 14px;
+    padding-bottom: 14px;
+  }
+
+  .brand-mark.large {
+    width: 48px;
+    height: 48px;
+  }
+
+  .copy-block h1 {
+    font-size: clamp(1.85rem, 9.5vw, 3rem);
+  }
+
+  .copy-block p {
+    font-size: 0.86rem;
+    line-height: 1.6;
+  }
+
+  .circle-button {
+    width: 50px;
+    height: 50px;
+  }
+
+  .home-link {
+    min-height: 44px;
   }
 
   .topbar p {
     display: none;
   }
 }
-

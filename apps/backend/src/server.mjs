@@ -48,7 +48,46 @@ app.get('/health', (_request, response) => {
   response.json({
     ok: true,
     service: 'studio-meadow-backend',
-    flowers: store.getAcceptedFlowers().length
+    flowers: store.getAcceptedFlowers().length,
+    active_meadow_session: store.getActiveMeadowSession()
+  });
+});
+
+app.get('/api/sessions', (_request, response) => {
+  response.json({
+    ok: true,
+    active_session: store.getActiveMeadowSession(),
+    sessions: store.getMeadowSessions().map((session) => ({
+      ...session,
+      flower_count: store.getActiveFlowers(session.id).length
+    }))
+  });
+});
+
+app.post('/api/sessions', async (request, response, next) => {
+  try {
+    const name = normalizeText(request.body?.name, 80);
+    const session = await store.startMeadowSession(name);
+
+    broadcastEvent({
+      type: 'meadow_session_changed',
+      session
+    });
+
+    response.status(201).json({
+      ok: true,
+      session,
+      message: 'Started a new meadow session.'
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get('/api/sessions/active', (_request, response) => {
+  response.json({
+    ok: true,
+    session: store.getActiveMeadowSession()
   });
 });
 
@@ -62,18 +101,29 @@ app.post('/api/flowers', async (request, response, next) => {
     }
 
     const name = normalizeText(request.body?.name, 48) || null;
+    const requestedMeadowSessionId = normalizeText(request.body?.meadow_session_id, 128);
+    const meadowSession =
+      (requestedMeadowSessionId && store.getMeadowSession(requestedMeadowSessionId)) || store.getActiveMeadowSession();
+
+    if (!meadowSession) {
+      throw Object.assign(new Error('No active meadow session exists'), { statusCode: 500 });
+    }
+
     const buffer = decodePngDataUrl(request.body?.image_base64);
     const inspection = inspectPng(buffer);
     const id = crypto.randomUUID();
+    const sessionUploadDir = join(uploadDir, meadowSession.id);
     const filename = `flower_${id}.png`;
-    const filePath = join(uploadDir, filename);
+    const filePath = join(sessionUploadDir, filename);
 
+    await mkdir(sessionUploadDir, { recursive: true });
     await writeFile(filePath, buffer, { flag: 'wx' });
 
     const createdAt = new Date().toISOString();
-    const imageUrl = buildImageUrl(request, filename);
+    const imageUrl = buildImageUrl(request, meadowSession.id, filename);
     const flower = {
       id,
+      meadow_session_id: meadowSession.id,
       session_id: sessionId,
       name,
       image_url: imageUrl,
@@ -98,6 +148,7 @@ app.post('/api/flowers', async (request, response, next) => {
     response.status(201).json({
       ok: true,
       flower_id: id,
+      meadow_session_id: meadowSession.id,
       message: 'Your flower is joining the meadow.'
     });
   } catch (error) {
@@ -105,18 +156,24 @@ app.post('/api/flowers', async (request, response, next) => {
   }
 });
 
-app.get('/api/flowers/active', (_request, response) => {
+app.get('/api/flowers/active', (request, response) => {
+  const meadowSessionId = getRequestedMeadowSessionId(request);
+
   response.json({
     ok: true,
-    flowers: store.getActiveFlowers()
+    meadow_session: store.getMeadowSession(meadowSessionId),
+    flowers: store.getActiveFlowers(meadowSessionId)
   });
 });
 
 app.get('/api/flowers/recent', (request, response, next) => {
   try {
+    const meadowSessionId = getRequestedMeadowSessionId(request);
+
     response.json({
       ok: true,
-      flowers: store.getRecentFlowers(request.query.since)
+      meadow_session: store.getMeadowSession(meadowSessionId),
+      flowers: store.getRecentFlowers(request.query.since, meadowSessionId)
     });
   } catch (error) {
     next(error);
@@ -136,7 +193,8 @@ wss.on('connection', (socket) => {
   socket.send(
     JSON.stringify({
       type: 'hello',
-      active_count: store.getAcceptedFlowers().length,
+      active_session: store.getActiveMeadowSession(),
+      active_count: store.getActiveFlowers().length,
       server_time: new Date().toISOString()
     })
   );
@@ -146,9 +204,9 @@ server.listen(port, '0.0.0.0', () => {
   console.log(`Studio Meadow backend listening on http://localhost:${port}`);
 });
 
-function buildImageUrl(request, filename) {
+function buildImageUrl(request, meadowSessionId, filename) {
   const baseUrl = publicBaseUrl || `${request.protocol}://${request.get('host')}`;
-  return `${baseUrl.replace(/\/$/, '')}/uploads/flowers/${filename}`;
+  return `${baseUrl.replace(/\/$/, '')}/uploads/flowers/${encodeURIComponent(meadowSessionId)}/${filename}`;
 }
 
 function normalizeText(value, maxLength) {
@@ -172,14 +230,28 @@ function enforceRateLimit(request) {
 }
 
 function broadcastNewFlower(flower) {
-  const event = JSON.stringify({
+  broadcastEvent({
     type: 'new_flower',
     flower
   });
+}
+
+function broadcastEvent(payload) {
+  const event = JSON.stringify(payload);
 
   for (const client of wss.clients) {
     if (client.readyState === client.OPEN) {
       client.send(event);
     }
   }
+}
+
+function getRequestedMeadowSessionId(request) {
+  const requested = normalizeText(request.query.session || request.query.meadow_session_id, 128);
+
+  if (requested && store.getMeadowSession(requested)) {
+    return requested;
+  }
+
+  return store.getActiveMeadowSession()?.id;
 }
