@@ -178,7 +178,7 @@ function clearCanvas() {
 }
 
 async function submitFlower(payload) {
-  const apiBaseUrl = window.STUDIO_MEADOW_API_BASE_URL || '';
+  const apiBaseUrl = getApiBaseUrl();
 
   if (!apiBaseUrl) {
     window.localStorage.setItem('studio-meadow-last-flower', JSON.stringify(payload));
@@ -197,6 +197,18 @@ async function submitFlower(payload) {
   if (!response.ok) {
     throw new Error('Submission failed');
   }
+}
+
+function getApiBaseUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const apiFromQuery = params.get('api');
+
+  if (apiFromQuery) {
+    window.localStorage.setItem('studio-meadow-api-base-url', apiFromQuery);
+    return apiFromQuery;
+  }
+
+  return window.STUDIO_MEADOW_API_BASE_URL || window.localStorage.getItem('studio-meadow-api-base-url') || '';
 }
 
 async function handleSubmit() {
@@ -255,4 +267,3 @@ canvas.addEventListener('pointercancel', endStroke);
 undoButton.addEventListener('click', undo);
 clearButton.addEventListener('click', clearCanvas);
 submitButton.addEventListener('click', handleSubmit);
-

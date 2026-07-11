@@ -1,0 +1,18 @@
+{
+  "name": "studio-meadow-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node src/server.mjs",
+    "start": "node src/server.mjs",
+    "check": "node --input-type=module -e \"await import('./src/png.mjs'); await import('./src/store.mjs');\""
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.3",
+    "helmet": "^7.2.0",
+    "pngjs": "^7.0.0",
+    "ws": "^8.18.3"
+  }
+}
