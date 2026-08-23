@@ -60,11 +60,12 @@ svg path {
 }
 
 .app-shell {
-  min-height: 100svh;
+  min-height: 100vh;
+  min-height: 100dvh;
   padding: max(16px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right))
     max(18px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
   display: flex;
-  align-items: flex-start;
+  align-items: stretch;
   justify-content: center;
   background:
     radial-gradient(circle at 50% 4%, rgba(240, 182, 106, 0.16), transparent 32%),
@@ -88,18 +89,18 @@ svg path {
 }
 
 .scene-copy {
-  min-height: calc(100svh - 34px);
-  grid-template-rows: minmax(58px, 1fr) auto minmax(58px, 1fr);
-  justify-items: center;
-  align-content: stretch;
+  min-height: calc(100vh - 34px);
+  min-height: calc(100dvh - 34px);
+  justify-content: center;
   align-items: center;
-  row-gap: clamp(18px, 5svh, 34px);
+  gap: clamp(22px, 5svh, 38px);
   padding: clamp(16px, 5svh, 34px) 8px;
   text-align: center;
 }
 
 .scene-copy.active {
-  display: grid;
+  display: flex;
+  flex-direction: column;
 }
 
 .panel {
@@ -152,6 +153,11 @@ h1 {
   font-weight: 600;
 }
 
+#thanks-title {
+  max-width: 100%;
+  white-space: nowrap;
+}
+
 .copy-block {
   display: grid;
   gap: clamp(12px, 3svh, 18px);
@@ -165,15 +171,18 @@ h1 {
   line-height: 0.94;
 }
 
-.copy-block .welcome-heading {
+.welcome-lockup {
   max-width: min(19rem, 88vw);
   display: grid;
   gap: 14px;
   justify-items: center;
+  align-items: center;
 }
 
-.welcome-heading span {
-  display: block;
+.copy-block .welcome-heading {
+  max-width: min(19rem, 88vw);
+  font-size: clamp(1.35rem, 7vw, 2.15rem);
+  line-height: 1.05;
 }
 
 .welcome-wordmark {
@@ -329,9 +338,10 @@ p {
   height: 46px;
   display: grid;
   place-items: center;
-  border: 1px solid rgba(161, 179, 146, 0.32);
+  border: 1px solid rgba(232, 196, 107, 0.55);
   border-radius: 8px;
-  background: rgba(38, 50, 36, 0.86);
+  background: rgba(38, 50, 36, 0.78);
+  box-shadow: 0 0 28px rgba(232, 196, 107, 0.1);
 }
 
 .icon-button svg,
@@ -355,11 +365,12 @@ p {
   grid-template-columns: 30px 1fr;
   gap: 10px;
   align-items: center;
-  border: 1px solid rgba(161, 179, 146, 0.32);
+  border: 1px solid rgba(232, 196, 107, 0.55);
   border-radius: 8px;
   padding: 0 12px;
-  color: rgba(241, 226, 200, 0.82);
-  background: rgba(38, 50, 36, 0.62);
+  color: var(--ivory);
+  background: rgba(38, 50, 36, 0.78);
+  box-shadow: 0 0 28px rgba(232, 196, 107, 0.1);
 }
 
 .brush-control input {
@@ -397,9 +408,11 @@ p {
   align-items: center;
   justify-content: center;
   gap: 10px;
+  border: 1px solid rgba(232, 196, 107, 0.55);
   border-radius: 8px;
-  background: linear-gradient(180deg, #f0b66a 0%, #d69755 100%);
-  color: #10140d;
+  background: rgba(38, 50, 36, 0.78);
+  color: var(--ivory);
+  box-shadow: 0 0 28px rgba(232, 196, 107, 0.1);
   font-weight: 700;
   font-size: 0.9rem;
 }
@@ -407,7 +420,9 @@ p {
 .submit-button:disabled {
   cursor: not-allowed;
   color: rgba(241, 226, 200, 0.36);
-  background: rgba(38, 50, 36, 0.7);
+  border-color: rgba(232, 196, 107, 0.22);
+  background: rgba(38, 50, 36, 0.5);
+  box-shadow: none;
 }
 
 .status-message {
@@ -466,8 +481,7 @@ p {
   }
 
   .scene-copy {
-    grid-template-rows: minmax(42px, 0.8fr) auto minmax(42px, 0.8fr);
-    row-gap: 14px;
+    gap: 16px;
     padding-top: 14px;
     padding-bottom: 14px;
   }
@@ -483,10 +497,6 @@ p {
 
   .copy-block h1 {
     font-size: clamp(1.85rem, 9.5vw, 3rem);
-  }
-
-  .welcome-heading {
-    gap: 10px;
   }
 
   .welcome-wordmark {
