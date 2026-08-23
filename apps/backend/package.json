@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "node src/server.mjs",
     "start": "node src/server.mjs",
-    "check": "node --input-type=module -e \"await import('./src/png.mjs'); await import('./src/store.mjs');\""
+    "check": "node --input-type=module -e \"await import('./src/png.mjs'); await import('./src/store.mjs');\"",
+    "delete-flower": "node scripts/delete-flower.mjs"
   },
   "dependencies": {
     "cors": "^2.8.5",

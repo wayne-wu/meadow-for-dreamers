@@ -86,6 +86,19 @@ export class FlowerStore {
     return flower;
   }
 
+  async deleteFlower(flowerId) {
+    const flowerIndex = this.state.flowers.findIndex((flower) => flower.id === flowerId);
+
+    if (flowerIndex === -1) {
+      return null;
+    }
+
+    const [deletedFlower] = this.state.flowers.splice(flowerIndex, 1);
+    this.rebuildLatestBySession();
+    await this.save();
+    return deletedFlower;
+  }
+
   getAcceptedFlowers() {
     return this.state.flowers.filter((flower) => flower.status === 'accepted');
   }
@@ -124,6 +137,18 @@ export class FlowerStore {
       started_at: now,
       status: 'active'
     };
+  }
+
+  rebuildLatestBySession() {
+    const nextLatestBySession = {};
+
+    for (const flower of this.getAcceptedFlowers().sort(compareCreatedAt)) {
+      if (flower.session_id && flower.meadow_session_id) {
+        nextLatestBySession[`${flower.meadow_session_id}:${flower.session_id}`] = flower.id;
+      }
+    }
+
+    this.state.latestBySession = nextLatestBySession;
   }
 }
 

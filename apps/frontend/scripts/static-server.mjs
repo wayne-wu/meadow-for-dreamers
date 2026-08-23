@@ -16,6 +16,18 @@ const contentTypes = {
 const server = createServer(async (request, response) => {
   try {
     const url = new URL(request.url || '/', `http://${request.headers.host}`);
+
+    if (url.pathname === '/runtime-config.js') {
+      response.writeHead(200, {
+        'Content-Type': 'text/javascript; charset=utf-8',
+        'Cache-Control': 'no-cache'
+      });
+      response.end(
+        `window.STUDIO_MEADOW_API_BASE_URL = ${JSON.stringify(process.env.STUDIO_MEADOW_API_BASE_URL || '')};\n`
+      );
+      return;
+    }
+
     const pathname = url.pathname === '/' ? '/index.html' : url.pathname;
     const filePath = normalize(join(rootDir, pathname));
 
@@ -40,4 +52,3 @@ const server = createServer(async (request, response) => {
 server.listen(port, '0.0.0.0', () => {
   console.log(`Studio Meadow frontend running at http://localhost:${port}/`);
 });
-

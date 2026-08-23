@@ -38,9 +38,11 @@ let selectedColor = palette[1][1];
 let brushSize = Number(brushInput.value);
 let drawing = false;
 let lastPoint = null;
+let lastMidPoint = null;
 let visiblePixels = 0;
 let undoStack = [];
 let lastTouchEndAt = 0;
+let hasDrawnSinceValidation = false;
 
 canvas.width = EXPORT_WIDTH;
 canvas.height = EXPORT_HEIGHT;
@@ -105,11 +107,12 @@ function setStatus(state, message = '') {
 
   submitLabel.textContent = 'Send flower';
   submitIcon.innerHTML = '<path d="m22 2-7 20-4-9-9-4Z" /><path d="M22 2 11 13" />';
-  submitButton.disabled = visiblePixels < MIN_VISIBLE_PIXELS;
+  submitButton.disabled = !hasDrawnSinceValidation && visiblePixels < MIN_VISIBLE_PIXELS;
 }
 
 function updateVisiblePixelCount() {
   visiblePixels = countVisiblePixels();
+  hasDrawnSinceValidation = false;
   submitButton.disabled = visiblePixels < MIN_VISIBLE_PIXELS;
 }
 
@@ -121,6 +124,7 @@ function pushUndoState() {
 }
 
 function beginStroke(event) {
+  event.preventDefault();
   canvas.setPointerCapture(event.pointerId);
   pushUndoState();
   setStatus('idle');
@@ -128,6 +132,7 @@ function beginStroke(event) {
   const point = getCanvasPoint(event);
   drawing = true;
   lastPoint = point;
+  lastMidPoint = point;
 
   context.lineCap = 'round';
   context.lineJoin = 'round';
@@ -137,13 +142,12 @@ function beginStroke(event) {
   context.beginPath();
   context.arc(point.x, point.y, brushSize / 2, 0, Math.PI * 2);
   context.fill();
-  updateVisiblePixelCount();
+  hasDrawnSinceValidation = true;
+  submitButton.disabled = false;
 }
 
-function continueStroke(event) {
-  if (!drawing || !lastPoint) return;
-
-  const point = getCanvasPoint(event);
+function drawToPoint(point) {
+  if (!lastPoint || !lastMidPoint) return;
   const middlePoint = {
     x: (lastPoint.x + point.x) / 2,
     y: (lastPoint.y + point.y) / 2
@@ -154,12 +158,23 @@ function continueStroke(event) {
   context.strokeStyle = selectedColor;
   context.lineWidth = brushSize;
   context.beginPath();
-  context.moveTo(lastPoint.x, lastPoint.y);
+  context.moveTo(lastMidPoint.x, lastMidPoint.y);
   context.quadraticCurveTo(lastPoint.x, lastPoint.y, middlePoint.x, middlePoint.y);
   context.stroke();
 
   lastPoint = point;
-  updateVisiblePixelCount();
+  lastMidPoint = middlePoint;
+}
+
+function continueStroke(event) {
+  if (!drawing || !lastPoint) return;
+
+  event.preventDefault();
+  const events = typeof event.getCoalescedEvents === 'function' ? event.getCoalescedEvents() : [event];
+
+  events.forEach((currentEvent) => {
+    drawToPoint(getCanvasPoint(currentEvent));
+  });
 }
 
 function endStroke(event) {
@@ -167,9 +182,20 @@ function endStroke(event) {
     canvas.releasePointerCapture(event.pointerId);
   }
 
+  if (drawing && lastPoint && lastMidPoint) {
+    context.lineCap = 'round';
+    context.lineJoin = 'round';
+    context.strokeStyle = selectedColor;
+    context.lineWidth = brushSize;
+    context.beginPath();
+    context.moveTo(lastMidPoint.x, lastMidPoint.y);
+    context.lineTo(lastPoint.x, lastPoint.y);
+    context.stroke();
+  }
+
   drawing = false;
   lastPoint = null;
-  updateVisiblePixelCount();
+  lastMidPoint = null;
 }
 
 function undo() {
@@ -194,6 +220,8 @@ function resetDrawing() {
   undoStack = [];
   drawing = false;
   lastPoint = null;
+  lastMidPoint = null;
+  hasDrawnSinceValidation = false;
   setStatus('idle');
   updateVisiblePixelCount();
 }
@@ -229,7 +257,20 @@ function getApiBaseUrl() {
     return apiFromQuery;
   }
 
-  return window.STUDIO_MEADOW_API_BASE_URL || window.localStorage.getItem('studio-meadow-api-base-url') || '';
+  return (
+    window.STUDIO_MEADOW_API_BASE_URL ||
+    window.localStorage.getItem('studio-meadow-api-base-url') ||
+    getDefaultLocalApiBaseUrl()
+  );
+}
+
+function getDefaultLocalApiBaseUrl() {
+  if (!window.location.hostname) return '';
+  if (window.location.port && window.location.port !== '8787') {
+    return `${window.location.protocol}//${window.location.hostname}:8787`;
+  }
+
+  return window.location.origin;
 }
 
 async function handleSubmit() {

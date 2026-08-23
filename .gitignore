@@ -3,9 +3,12 @@ dist/
 .env
 .env.*
 !.env.example
+.studio-meadow.env
 .DS_Store
 npm-debug.log*
+.studio-meadow/
 apps/backend/data/
 apps/backend/public/uploads/flowers/*.png
 apps/backend/public/uploads/flowers/*/
 !apps/backend/public/uploads/flowers/.gitkeep
+Backup/

@@ -138,6 +138,12 @@ svg path {
   height: 58px;
 }
 
+.welcome-symbol {
+  width: clamp(43px, 14vw, 60px);
+  height: auto;
+  display: block;
+}
+
 h1 {
   margin: 0;
   font-family: "Cormorant Garamond", Georgia, "Times New Roman", serif;
@@ -157,6 +163,23 @@ h1 {
   max-width: 9ch;
   font-size: clamp(2rem, 10.5vw, 3.75rem);
   line-height: 0.94;
+}
+
+.copy-block .welcome-heading {
+  max-width: min(19rem, 88vw);
+  display: grid;
+  gap: 14px;
+  justify-items: center;
+}
+
+.welcome-heading span {
+  display: block;
+}
+
+.welcome-wordmark {
+  width: min(18rem, 76vw);
+  height: auto;
+  display: block;
 }
 
 .copy-block p {
@@ -289,8 +312,8 @@ p {
 
 .tools-row {
   display: grid;
-  grid-template-columns: 46px 46px 1fr;
-  gap: 10px;
+  grid-template-columns: 50px 50px 1fr;
+  gap: 12px;
   align-items: center;
 }
 
@@ -302,8 +325,8 @@ p {
 }
 
 .icon-button {
-  width: 46px;
-  height: 42px;
+  width: 50px;
+  height: 46px;
   display: grid;
   place-items: center;
   border: 1px solid rgba(161, 179, 146, 0.32);
@@ -314,8 +337,8 @@ p {
 .icon-button svg,
 .brush-control svg,
 .submit-button svg {
-  width: 20px;
-  height: 20px;
+  width: 21px;
+  height: 21px;
   flex: 0 0 auto;
 }
 
@@ -327,10 +350,10 @@ p {
 }
 
 .brush-control {
-  height: 42px;
+  height: 46px;
   display: grid;
-  grid-template-columns: 28px 1fr;
-  gap: 8px;
+  grid-template-columns: 30px 1fr;
+  gap: 10px;
   align-items: center;
   border: 1px solid rgba(161, 179, 146, 0.32);
   border-radius: 8px;
@@ -369,7 +392,7 @@ p {
 
 .submit-button {
   width: 100%;
-  min-height: 52px;
+  min-height: 54px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -454,8 +477,20 @@ p {
     height: 48px;
   }
 
+  .welcome-symbol {
+    width: 41px;
+  }
+
   .copy-block h1 {
     font-size: clamp(1.85rem, 9.5vw, 3rem);
+  }
+
+  .welcome-heading {
+    gap: 10px;
+  }
+
+  .welcome-wordmark {
+    width: min(15rem, 76vw);
   }
 
   .copy-block p {

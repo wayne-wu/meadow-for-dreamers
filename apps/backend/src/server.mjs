@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import http from 'node:http';
-import { mkdir, writeFile } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
+import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { dirname, join, normalize, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import cors from 'cors';
 import express from 'express';
@@ -16,6 +16,7 @@ const port = Number(process.env.PORT || 8787);
 const publicBaseUrl = process.env.PUBLIC_BASE_URL || '';
 const databasePath = process.env.DATABASE_PATH || join(appRoot, 'data', 'flowers.json');
 const uploadDir = process.env.UPLOAD_DIR || join(appRoot, 'public', 'uploads', 'flowers');
+const frontendDistDir = process.env.FRONTEND_DIST_DIR || resolve(appRoot, '..', 'frontend', 'dist');
 const paletteVersion = process.env.PALETTE_VERSION || 'studio-meadow-v1';
 const allowedOrigins = (process.env.CORS_ORIGIN || '*').split(',').map((origin) => origin.trim());
 
@@ -180,6 +181,58 @@ app.get('/api/flowers/recent', (request, response, next) => {
   }
 });
 
+app.delete('/api/flowers/:flowerId', async (request, response, next) => {
+  try {
+    const flowerId = normalizeText(request.params.flowerId, 128);
+    const deletedFlower = await store.deleteFlower(flowerId);
+
+    if (!deletedFlower) {
+      response.status(404).json({
+        ok: false,
+        error: 'Flower not found'
+      });
+      return;
+    }
+
+    const deletedImagePath = await deleteFlowerImage(deletedFlower);
+
+    broadcastEvent({
+      type: 'flower_deleted',
+      flower_id: deletedFlower.id,
+      meadow_session_id: deletedFlower.meadow_session_id
+    });
+
+    response.json({
+      ok: true,
+      flower_id: deletedFlower.id,
+      deleted_image_path: deletedImagePath,
+      message: 'Flower deleted.'
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.use(
+  express.static(frontendDistDir, {
+    immutable: false,
+    maxAge: 0,
+    setHeaders: (response) => {
+      response.setHeader('Cache-Control', 'no-store');
+    }
+  })
+);
+app.get('*', (request, response, next) => {
+  if (request.path.startsWith('/api/') || request.path === '/ws') {
+    next();
+    return;
+  }
+
+  response.sendFile(join(frontendDistDir, 'index.html'), (error) => {
+    if (error) next(error);
+  });
+});
+
 app.use((error, _request, response, _next) => {
   const statusCode = error.statusCode || 500;
 
@@ -207,6 +260,19 @@ server.listen(port, '0.0.0.0', () => {
 function buildImageUrl(request, meadowSessionId, filename) {
   const baseUrl = publicBaseUrl || `${request.protocol}://${request.get('host')}`;
   return `${baseUrl.replace(/\/$/, '')}/uploads/flowers/${encodeURIComponent(meadowSessionId)}/${filename}`;
+}
+
+async function deleteFlowerImage(flower) {
+  const filename = `flower_${flower.id}.png`;
+  const imagePath = normalize(join(uploadDir, flower.meadow_session_id || '', filename));
+  const uploadRoot = normalize(uploadDir);
+
+  if (relative(uploadRoot, imagePath).startsWith('..')) {
+    throw Object.assign(new Error('Refusing to delete image outside upload directory'), { statusCode: 500 });
+  }
+
+  await rm(imagePath, { force: true });
+  return imagePath;
 }
 
 function normalizeText(value, maxLength) {

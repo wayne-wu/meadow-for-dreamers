@@ -61,3 +61,21 @@ Load a specific older session:
 ```bash
 curl "http://localhost:8787/api/flowers/active?session=<meadow_session_id>"
 ```
+
+## Delete A Flower
+
+When the backend is running, delete a flower by passing its PNG filename, path, URL, or raw flower id:
+
+```bash
+npm run delete-flower -- flower_<flower_id>.png
+```
+
+Examples:
+
+```bash
+npm run delete-flower -- public/uploads/flowers/<meadow_session_id>/flower_<flower_id>.png
+npm run delete-flower -- http://localhost:8787/uploads/flowers/<meadow_session_id>/flower_<flower_id>.png
+npm run delete-flower -- <flower_id>
+```
+
+The command calls `DELETE /api/flowers/<flower_id>`, so the running backend removes both the JSON record and the PNG from disk.
