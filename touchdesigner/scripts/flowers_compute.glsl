@@ -18,6 +18,31 @@ float random01(uint seed)
     return float(hashUint(seed)) * 2.3283064365386963e-10;
 }
 
+uint weightedFlowerId(
+    uint patchId,
+    uint flowerCount,
+    uint recentCount,
+    float recentWeight)
+{
+    recentCount = min(recentCount, flowerCount);
+
+    uint olderCount = flowerCount - recentCount;
+    float weight = max(recentWeight, 1.0);
+    float totalWeight =
+        float(olderCount) + float(recentCount) * weight;
+    float ticket =
+        random01(patchId ^ 0x9e3779b9u) * totalWeight;
+
+    if (ticket < float(olderCount))
+        return uint(floor(ticket));
+
+    uint recentOffset = uint(floor(
+        (ticket - float(olderCount)) / weight
+    ));
+
+    return olderCount + min(recentOffset, recentCount - 1u);
+}
+
 uint particleBurstCount(uint id, uint patchId, float simTime)
 {
     uint seed =
@@ -36,6 +61,7 @@ void main()
         return;
 
     uint patchId = TDIn_PatchId();
+    uint flowerId = TDIn_FlowerId();
 
     // Whether this flower is allowed to spawn a new patch.
     int canSpawn = TDIn_Spawn();
@@ -87,6 +113,16 @@ void main()
     if (shouldSpawn)
     {
         patchId = uint(uSpawnPatchId);
+
+        // Assign the texture once per spawn. The five highest layer IDs are
+        // weighted more heavily while all roots in a patch share one ID.
+        uint flowerVariations = uint(max(uFlowerVariations, 1));
+        flowerId = weightedFlowerId(
+            patchId,
+            flowerVariations,
+            5u,
+            uRecentFlowerWeight
+        );
 
         flowerState = FLOWER_GROWING;
         stateTime = 0.0;
@@ -193,6 +229,7 @@ void main()
 
     Active[id] = isActive;
     PatchId[id] = patchId;
+    FlowerId[id] = flowerId;
     SpawnTime[id] = spawnTime;
     Age[id] = age;
     LifeSpan[id] = lifeSpan;

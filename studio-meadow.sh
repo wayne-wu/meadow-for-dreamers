@@ -29,6 +29,8 @@ Commands:
   restart   Stop, then start everything
   status    Show running service status
   logs      Tail service logs
+  delete-flower <flower_id | flower_<id>.png | path | image_url>
+            Delete one flower record and its PNG via the running backend
 
 Environment:
   FRONTEND_PORT=${FRONTEND_PORT}
@@ -90,6 +92,28 @@ status_all() {
 tail_logs() {
   touch "$LOG_DIR/backend.log" "$LOG_DIR/frontend.log" "$LOG_DIR/tunnel.log"
   tail -f "$LOG_DIR/backend.log" "$LOG_DIR/frontend.log" "$LOG_DIR/tunnel.log"
+}
+
+delete_flower() {
+  local flower_ref="${1:-}"
+
+  if [[ -z "$flower_ref" ]]; then
+    echo "Usage: ./studio-meadow.sh delete-flower <flower_id | flower_<id>.png | path | image_url>" >&2
+    exit 1
+  fi
+
+  require_command npm
+
+  if [[ -z "$(port_pid "$BACKEND_PORT")" ]]; then
+    echo "Backend is not running on port $BACKEND_PORT." >&2
+    echo "Start it first with: ./studio-meadow.sh start" >&2
+    exit 1
+  fi
+
+  (
+    cd "$ROOT_DIR/apps/backend"
+    API_BASE_URL="$BACKEND_URL" npm run delete-flower -- "$flower_ref"
+  )
 }
 
 start_service() {
@@ -287,6 +311,10 @@ case "${1:-}" in
     ;;
   logs)
     tail_logs
+    ;;
+  delete-flower)
+    shift
+    delete_flower "${1:-}"
     ;;
   *)
     usage
