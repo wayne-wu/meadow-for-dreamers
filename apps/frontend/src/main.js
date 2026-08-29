@@ -15,7 +15,13 @@ const palette = [
   ['Eucalyptus Green', '#A1B392'],
   ['Olive Straw', '#B5A76E'],
   ['Warm Pollen Gold', '#E8C46B'],
-  ['Soft Amber Glow', '#F0B66A']
+  ['Soft Amber Glow', '#F0B66A'],
+  ['Deep Moss', '#3F5638'],
+  ['Shadow Fern', '#55643E'],
+  ['Mulberry Rose', '#8A4D55'],
+  ['Earthen Clay', '#7A543D'],
+  ['Dusk Lavender', '#655A83'],
+  ['Storm Blue', '#4A6578']
 ];
 
 const welcomeScene = document.querySelector('#welcome-scene');

@@ -43,8 +43,8 @@ def onReceiveText(dat: websocketDAT, rowIndex: int, message: str):
         return
 
     if event.get('type') == 'new_flower':
-        print('New flower received; triggering texture refill')
-        op('refill_trigger').par.triggerpulse.pulse()
+        print('New flower received; refreshing folder')
+        op('folder1').par.refreshpulse.pulse()
 
     return
 

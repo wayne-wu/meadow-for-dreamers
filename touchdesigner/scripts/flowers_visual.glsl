@@ -21,7 +21,7 @@ void main()
 	    : t;
 	float growth = scaleProgress * scaleProgress *
 	    (3.0 - 2.0 * scaleProgress);
-	float widthScale = mix(0.08, 1.0, growth);
+	float widthScale = mix(0.08, maxHeight, growth);
 	float heightScale = mix(0.02, maxHeight, growth);
 	
 	float opacity = 1.0;

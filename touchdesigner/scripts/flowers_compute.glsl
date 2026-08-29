@@ -2,6 +2,7 @@ const uint FLOWER_INACTIVE = 0u;
 const uint FLOWER_GROWING  = 1u;
 const uint FLOWER_ALIVE    = 2u;
 const uint FLOWER_DYING    = 3u;
+const uint FLOWER_WAITING_TO_DIE = 4u;
 
 uint hashUint(uint x)
 {
@@ -22,25 +23,46 @@ uint weightedFlowerId(
     uint patchId,
     uint flowerCount,
     uint recentCount,
-    float recentWeight)
+    float recentProbability)
 {
     recentCount = min(recentCount, flowerCount);
-
     uint olderCount = flowerCount - recentCount;
-    float weight = max(recentWeight, 1.0);
-    float totalWeight =
-        float(olderCount) + float(recentCount) * weight;
-    float ticket =
-        random01(patchId ^ 0x9e3779b9u) * totalWeight;
+    recentProbability = clamp(recentProbability, 0.0, 1.0);
 
-    if (ticket < float(olderCount))
-        return uint(floor(ticket));
+    float groupRoll = random01(patchId ^ 0x9e3779b9u);
+    float indexRoll = random01(patchId ^ 0x85ebca6bu);
 
-    uint recentOffset = uint(floor(
-        (ticket - float(olderCount)) / weight
-    ));
+    // With no recent flowers, sample uniformly from the full older group.
+    if (recentCount == 0u)
+    {
+        return min(
+            uint(floor(indexRoll * float(flowerCount))),
+            flowerCount - 1u
+        );
+    }
 
-    return olderCount + min(recentOffset, recentCount - 1u);
+    // If every flower is recent, there is no older group to select from.
+    if (olderCount == 0u)
+    {
+        return min(
+            uint(floor(indexRoll * float(recentCount))),
+            recentCount - 1u
+        );
+    }
+
+    if (groupRoll < recentProbability)
+    {
+        uint recentOffset = min(
+            uint(floor(indexRoll * float(recentCount))),
+            recentCount - 1u
+        );
+        return olderCount + recentOffset;
+    }
+
+    return min(
+        uint(floor(indexRoll * float(olderCount))),
+        olderCount - 1u
+    );
 }
 
 uint particleBurstCount(uint id, uint patchId, float simTime)
@@ -94,6 +116,8 @@ void main()
     
     float deathStartGrowth = TDIn_DeathStartGrowth();
 
+    float deathDelay = TDIn_DeathDelay();
+
     uint deathPulse = 0u;
 
 
@@ -114,14 +138,14 @@ void main()
     {
         patchId = uint(uSpawnPatchId);
 
-        // Assign the texture once per spawn. The five highest layer IDs are
-        // weighted more heavily while all roots in a patch share one ID.
+        // Assign the texture once per spawn, splitting probability between
+        // the recent and older texture-layer groups.
         uint flowerVariations = uint(max(uFlowerVariations, 1));
         flowerId = weightedFlowerId(
             patchId,
             flowerVariations,
-            5u,
-            uRecentFlowerWeight
+            uRecentFlowerCount,
+            uRecentFlowerProbability
         );
 
         flowerState = FLOWER_GROWING;
@@ -158,11 +182,35 @@ void main()
         age >= lifeSpan;
 
     bool shouldGrab =
-        uGrabPulse > 0.5 &&
-        flowerState != FLOWER_INACTIVE &&
-        flowerState != FLOWER_DYING;
+        uGrabPulse > grabThreshold &&
+        (
+            flowerState == FLOWER_ALIVE ||
+            flowerState == FLOWER_GROWING
+        );
 
-    if (shouldKillPatch || shouldExpire || shouldGrab)
+    if (shouldGrab)
+    {
+        flowerState = FLOWER_WAITING_TO_DIE;
+        stateTime = 0.0;
+
+        uint delaySeed =
+            id * 73856093u ^
+            patchId * 19349663u ^
+            uint(uSimTime * 1000.0);
+
+        deathDelay = mix(
+            uDeathDelayRange.x,
+            uDeathDelayRange.y,
+            random01(delaySeed)
+        );
+    }
+
+    if (flowerState == FLOWER_WAITING_TO_DIE && stateTime >= deathDelay)
+    {
+        shouldKillPatch = true;
+    }
+
+    if (shouldKillPatch || shouldExpire)
     {
         flowerState = FLOWER_DYING;
         stateTime = 0.0;
@@ -194,6 +242,7 @@ void main()
             age = 0.0;
         }
     }
+
     else if (flowerState == FLOWER_DYING)
     {
         growth = max(
@@ -241,4 +290,5 @@ void main()
     DeathEmitted[id] = deathEmitted;
     DeathTarget[id] = deathTarget;
     DeathStartGrowth[id] = deathStartGrowth;
+    DeathDelay[id] = deathDelay;
 }
