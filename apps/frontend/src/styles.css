@@ -105,10 +105,12 @@ svg path {
 
 .panel {
   width: min(100%, 390px);
-  min-height: calc(100svh - 34px);
+  min-height: calc(100vh - 34px);
+  min-height: calc(100dvh - 34px);
   align-items: stretch;
   flex-direction: column;
   gap: 12px;
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
 }
 
 .panel.active {
@@ -402,8 +404,11 @@ p {
 }
 
 .submit-button {
+  position: sticky;
+  bottom: max(14px, env(safe-area-inset-bottom));
+  z-index: 5;
   width: 100%;
-  min-height: 54px;
+  min-height: 58px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -412,9 +417,12 @@ p {
   border-radius: 8px;
   background: rgba(38, 50, 36, 0.78);
   color: var(--ivory);
-  box-shadow: 0 0 28px rgba(232, 196, 107, 0.1);
+  box-shadow:
+    0 0 28px rgba(232, 196, 107, 0.16),
+    0 10px 26px rgba(8, 10, 7, 0.34);
   font-weight: 700;
   font-size: 0.9rem;
+  backdrop-filter: blur(10px);
 }
 
 .submit-button:disabled {

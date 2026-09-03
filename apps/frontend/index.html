@@ -15,17 +15,18 @@
       <section id="welcome-scene" class="scene scene-copy active" aria-labelledby="welcome-title">
         <div class="copy-block">
           <div class="welcome-lockup">
-            <h1 id="welcome-title" class="welcome-heading">Welcome to</h1>
             <img class="welcome-symbol" src="/assets/meadow_logo_light.png" alt="" aria-hidden="true" />
-            <img
+            <h1 id="welcome-title" class="welcome-heading">Welcome to</h1>
+            <h1 class="welcome-heading">"A Meadow for Dreamers"</h1>
+            <!-- <img
               class="welcome-wordmark"
               src="/assets/studio-meadow-logo-light.png"
               alt="Studio Meadow"
-            />
+            /> -->
           </div>
           <p>Two friends came together to bring a dream to life.</p>
           <p>Their story inspired this meadow, where every flower is a dream planted by someone here. Each one is unique. Each one blooms in its own way.</p>
-          <p>What does your dream look like?</p>
+          <p>What does your dream look like? Draw it on the next page.</p>
         </div>
         <button id="start-button" class="circle-button" type="button" aria-label="Begin drawing">
           <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -69,6 +70,8 @@
 
         <div id="palette" class="palette" aria-label="Color palette"></div>
 
+        <p id="status-message" class="status-message" aria-live="polite"></p>
+
         <button id="submit-button" class="submit-button" type="button" disabled>
           <svg id="submit-icon" viewBox="0 0 24 24" aria-hidden="true">
             <path d="m22 2-7 20-4-9-9-4Z" />
@@ -76,8 +79,6 @@
           </svg>
           <span id="submit-label">Send flower</span>
         </button>
-
-        <p id="status-message" class="status-message" aria-live="polite"></p>
       </section>
 
       <section id="thanks-scene" class="scene scene-copy" aria-labelledby="thanks-title">
@@ -85,7 +86,9 @@
         <div class="copy-block">
           <h1 id="thanks-title">Thank you.</h1>
           <p>The meadow is wide, and still your bloom will find its light.</p>
-          <p>When it appears, let your hand dirft through the air. The meadow will answer.</p>
+          <p>When it appears, let your hand dirft through the air.
+             Close your hand, and open it again.
+             The meadow will answer.</p>
         </div>
         <div class="final-actions">
           <a class="home-link" href="https://www.instagram.com/studio.meadow.la/" target="_blank" rel="noreferrer">
